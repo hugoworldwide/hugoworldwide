@@ -1,56 +1,84 @@
-let masterTodoList = []
+let newsList = []
+let page = 1;
+let keyword = "vietnam"
+const apiKey = "9ef7cffc05ce4582aa9a3a62d60fd83e"
 
-//add item to the list
-let addTodo = () => {
-    let todo = {
-        contents: document.getElementById("itemInput").value,
-        isDone: false
+
+const loadNews = async (status) => {
+    let url = `https://newsapi.org/v2/everything?q=${keyword}&page=${page}&sortBy=publishedAt&apiKey=${apiKey}`
+    let data = await fetch(url)
+    let result = await data.json();
+    let dataList = result.articles //new
+
+    if (status === 'search') {
+        newsList = dataList
+
     }
-    masterTodoList.push(todo)
-    showList(masterTodoList)
-    document.getElementById("itemInput").value = ""
-}
 
-//update the list
-let showList = (list) => {
-    let message = list.map((item, index) => {
-        if (item.isDone) {
-            return `<li><input type="checkbox" onchange = "complete(${index})" id = "justV">${item.contents} <button onclick = 'remove(${index})'>Remove</button></li>`.strike()
-        } else {
-            return `<li><input type="checkbox" onchange = "complete(${index})" id = "justV">${item.contents} <button onclick = 'remove(${index})'>Remove</button></li>`
-        }
-    }).join('')
-    document.getElementById("resultArea").innerHTML = message
-    console.log(masterTodoList)
-}
+    else if (status === 'loadMore') {
 
-let remove = (index) => {
-    masterTodoList.splice(index, 1)
-    showList(masterTodoList);
-}
+        newsList = newsList.concat(dataList) //old
 
-let complete = (index) => {
-    masterTodoList[index].isDone = !masterTodoList[index].isDone
-    if (masterTodoList[index].isDone) {
-        document.getElementById("justV").innerHTML = true
     }
-}
 
+    else if (status === 'firstTime') {
+        newsList = dataList
 
-
-let same = () => {
-    localStorage.setItem("todo", JSON.stringify, (masterTodoList))
-}
-
-let loadData = () => {
-    previouslist = JSON.parse(localStorage.getItem)("todo")
-    if (previouslist.lenght > 0) {
-        masterTodoList = previouslist;
-        showList()
     }
-    else {
-        masterTodoList = [];
-    }
+
+    console.log(result)
+    render(newsList)
 }
 
-loadData()
+const render = (list) => {
+
+    let newsHtml = list.map(item =>
+        `<div id="news">
+     <div id="contentsArea">
+        <div id="title">${item.title}</div>
+        <div id="source">${item.source.name}</div>
+        <div id="publishedAt">${getTime(item.publishedAt)}</div>
+        <a href="${item.url}"> ==> access article</a>
+
+        
+     </div>
+     <div id="imgArea">
+         <img src="${item.urlToImage}" width=200/>
+
+     </div>
+  </div>`).join('')
+
+
+    document.getElementById("newsArea").innerHTML = newsHtml
+
+}
+
+function getTime(time) {
+    let newTime = time.toString().split("").splice(0, 10).join("")
+    let newTime1 = newTime.replace("-", "")
+    let newTime2 = newTime1.replace("-", "")
+    console.log(newTime2)
+    return moment(newTime2, "YYYYMMDD").fromNow()
+}
+
+
+let loadMore = () => {
+    page++;
+    loadNews('loadMore');
+};
+
+let research = (e) => {
+    e.preventDefault()
+    keyword = document.getElementById('keywordArea').value
+
+
+    console.log("HEY", keyword)
+    loadNews('search');
+
+}
+
+const form = document.getElementById('id')
+form.addEventListener('submit', research)
+
+loadNews('firstTime');
+
